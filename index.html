@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ramadan Dashboard - IVEO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #120a1a;
+            --accent-gold: #e6b800; /* Richer Gold */
+            --text-white: #ffffff;
+            --text-muted: #9b89ab;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle, #1f112e 0%, #09050d 100%);
+            color: var(--text-white);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding-top: 8px;
+            padding-bottom: 28px;
+        }
+
+        .app-container {
+            width: 90%;
+            max-width: 320px;
+            text-align: center;
+            padding-bottom: 20px;
+        }
+
+        header h2 {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        header p.masjid-name {
+            margin: 4px 0 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-white);
+        }
+
+        /* Clock Card */
+        .main-clock {
+            background-color: var(--accent-gold);
+            color: #000;
+            padding: 15px 10px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+
+        #current-time { font-size: 3rem; font-weight: 800; margin: 0; }
+        #current-time sup { font-size: 1.1rem; font-weight: 600; vertical-align: super; }
+        .date-info { font-size: 1rem; margin-top: 2px; font-weight: 600; }
+
+        /* Updated Compact Next Prayer Block */
+        .next-prayer-block {
+            background-color: rgba(10, 31, 10, 0.8); /* Dark green background */
+            /* border-radius: 0 0 10px 10px; */
+            padding: 10px 20px;
+            margin-top: 10px;
+            margin-left: -10px;
+            margin-right: -10px;
+            width: calc(100% + 20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        #next-prayer-text {
+            font-size: 0.95rem;
+            color: var(--text-white);
+            font-weight: 500;
+            text-align: center;
+        }
+
+        #next-prayer-text .prayer-name {
+            color: var(--accent-gold);
+            font-weight: 700;
+        }
+
+        /* Prayer Rows */
+        .prayer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .prayer-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 15px;
+            align-items: center;
+            padding: 3px 25px;
+            font-size: 1.4rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .prayer-row.active {
+            background-color: var(--accent-gold);
+            color: #000;
+            transform: scale(1.05);
+        }
+
+        .prayer-row.active span:not(.prayer-name):not(.iqama-time) {
+            font-weight: bold;
+        }
+
+        .prayer-name { 
+            text-align: left; 
+            font-weight: normal;
+        }
+        
+        /* Prayer list header */
+        .prayer-header {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 15px;
+            padding: 8px 25px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 5px;
+        }
+        
+        .prayer-header span:first-child {
+            text-align: left;
+        }
+        
+        .prayer-header span:last-child {
+            text-align: right;
+        }
+        
+        /* Prayer timings (Adhan) - middle column - bigger font size */
+        #fajr, #dhuhr, #asr, #maghrib, #isha {
+            font-weight: bold;
+            font-size: 2rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Iqama time styling - right column - normal font, no weight */
+        .iqama-time {
+            font-weight: normal;
+            font-size: 0.8rem;
+            color: var(--accent-gold);
+            text-align: right;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        
+        .prayer-row.active .iqama-time {
+            color: #000;
+        }
+
+        /* Footer Info */
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            margin-top: 25px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 20px;
+        }
+
+        .footer-item h3 { font-size: 1rem; color: var(--text-muted); text-transform: uppercase; margin: 0; }
+        .footer-item p { font-size: 1.9rem; margin: 5px 0; font-weight: bold; }
+
+        /* Ensure Sunrise in footer isn't affected by prayer-row Adhan styles */
+        #sunrise {
+            font-size: 1.9rem;
+            font-weight: bold;
+            display: block;
+            text-align: inherit;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h2 style="letter-spacing: 2px;">ICBR: Masjid An-Noor</h2>
+    </header>
+
+    <div class="main-clock">
+        <p id="current-time">00:00:00</p>
+        <div class="date-info">
+            <span id="ramadan-day">01 Ramadan 1447</span><br>
+            <span id="current-date">-- Feb 2026</span>
+        </div>
+        <div class="next-prayer-block">
+            <span id="next-prayer-text">-- in --:--:--</span>
+        </div>
+    </div>
+
+    <div class="prayer-list" id="prayer-list">
+        <div class="prayer-header">
+            <span>Prayer</span>
+            <span>Adhan</span>
+            <span>Iqama</span>
+        </div>
+        <div class="prayer-row" id="row-fajr">
+            <span class="prayer-name">Fajr</span>
+            <span id="fajr">--:--</span>
+            <span class="iqama-time" id="iqama-fajr">6:05</span>
+        </div>
+        <div class="prayer-row" id="row-dhuhr">
+            <span class="prayer-name">Dhuhr</span>
+            <span id="dhuhr">--:--</span>
+            <span class="iqama-time" id="iqama-dhuhr">1:00</span>
+        </div>
+        <div class="prayer-row" id="row-asr">
+            <span class="prayer-name">Asr</span>
+            <span id="asr">--:--</span>
+            <span class="iqama-time" id="iqama-asr">4:00</span>
+        </div>
+        <div class="prayer-row" id="row-maghrib">
+            <span class="prayer-name">Maghrib</span>
+            <span id="maghrib">--:--</span>
+            <span class="iqama-time" id="iqama-maghrib">5:58</span>
+        </div>
+        <div class="prayer-row" id="row-isha">
+            <span class="prayer-name">Isha</span>
+            <span id="isha">--:--</span>
+            <span class="iqama-time" id="iqama-isha">7:45</span>
+        </div>
+    </div>
+
+    <div class="footer-grid">
+        <div class="footer-item">
+            <h3>Sunrise</h3>
+            <p id="sunrise">--:--</p>
+        </div>
+        <div class="footer-item">
+            <h3>Jumua</h3>
+            <p>1:45</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Embedded Ramadan Timings Data (converted from CSV)
+    const ramadanTimingsData = [
+        {"Ramadan": "1", "Date": "18-Feb", "Day": "Wed", "Fajr": "5:35", "Sunrise": "6:42", "Dhuhr": "12:18", "Asr": "3:30", "Maghrib": "5:56", "Isha": "7:02"},
+        {"Ramadan": "2", "Date": "19-Feb", "Day": "Thu", "Fajr": "5:34", "Sunrise": "6:41", "Dhuhr": "12:18", "Asr": "3:30", "Maghrib": "5:57", "Isha": "7:02"},
+        {"Ramadan": "3", "Date": "20-Feb", "Day": "Fri", "Fajr": "5:34", "Sunrise": "6:40", "Dhuhr": "12:18", "Asr": "3:31", "Maghrib": "5:58", "Isha": "7:03"},
+        {"Ramadan": "4", "Date": "21-Feb", "Day": "Sat", "Fajr": "5:33", "Sunrise": "6:39", "Dhuhr": "12:18", "Asr": "3:31", "Maghrib": "5:58", "Isha": "7:04"},
+        {"Ramadan": "5", "Date": "22-Feb", "Day": "Sun", "Fajr": "5:32", "Sunrise": "6:38", "Dhuhr": "12:18", "Asr": "3:32", "Maghrib": "5:59", "Isha": "7:04"},
+        {"Ramadan": "6", "Date": "23-Feb", "Day": "Mon", "Fajr": "5:31", "Sunrise": "6:37", "Dhuhr": "12:18", "Asr": "3:32", "Maghrib": "6:00", "Isha": "7:05"},
+        {"Ramadan": "7", "Date": "24-Feb", "Day": "Tue", "Fajr": "5:30", "Sunrise": "6:36", "Dhuhr": "12:18", "Asr": "3:33", "Maghrib": "6:01", "Isha": "7:06"},
+        {"Ramadan": "8", "Date": "25-Feb", "Day": "Wed", "Fajr": "5:29", "Sunrise": "6:35", "Dhuhr": "12:17", "Asr": "3:33", "Maghrib": "6:01", "Isha": "7:07"},
+        {"Ramadan": "9", "Date": "26-Feb", "Day": "Thu", "Fajr": "5:28", "Sunrise": "6:34", "Dhuhr": "12:17", "Asr": "3:33", "Maghrib": "6:02", "Isha": "7:07"},
+        {"Ramadan": "10", "Date": "27-Feb", "Day": "Fri", "Fajr": "5:27", "Sunrise": "6:33", "Dhuhr": "12:17", "Asr": "3:34", "Maghrib": "6:03", "Isha": "7:08"},
+        {"Ramadan": "11", "Date": "28-Feb", "Day": "Sat", "Fajr": "5:26", "Sunrise": "6:32", "Dhuhr": "12:17", "Asr": "3:34", "Maghrib": "6:04", "Isha": "7:09"},
+        {"Ramadan": "12", "Date": "1-Mar", "Day": "Sun", "Fajr": "5:25", "Sunrise": "6:30", "Dhuhr": "12:17", "Asr": "3:35", "Maghrib": "6:04", "Isha": "7:09"},
+        {"Ramadan": "13", "Date": "2-Mar", "Day": "Mon", "Fajr": "5:24", "Sunrise": "6:29", "Dhuhr": "12:16", "Asr": "3:35", "Maghrib": "6:05", "Isha": "7:10"},
+        {"Ramadan": "14", "Date": "3-Mar", "Day": "Tue", "Fajr": "5:22", "Sunrise": "6:28", "Dhuhr": "12:16", "Asr": "3:35", "Maghrib": "6:06", "Isha": "7:11"},
+        {"Ramadan": "15", "Date": "4-Mar", "Day": "Wed", "Fajr": "5:21", "Sunrise": "6:27", "Dhuhr": "12:16", "Asr": "3:36", "Maghrib": "6:06", "Isha": "7:11"},
+        {"Ramadan": "16", "Date": "5-Mar", "Day": "Thu", "Fajr": "5:20", "Sunrise": "6:26", "Dhuhr": "12:16", "Asr": "3:36", "Maghrib": "6:07", "Isha": "7:12"},
+        {"Ramadan": "17", "Date": "6-Mar", "Day": "Fri", "Fajr": "5:19", "Sunrise": "6:25", "Dhuhr": "12:16", "Asr": "3:36", "Maghrib": "6:08", "Isha": "7:13"},
+        {"Ramadan": "18", "Date": "7-Mar", "Day": "Sat", "Fajr": "5:18", "Sunrise": "6:24", "Dhuhr": "12:15", "Asr": "3:36", "Maghrib": "6:08", "Isha": "7:13"},
+        {"Ramadan": "19*", "Date": "8-Mar", "Day": "Sun", "Fajr": "6:17", "Sunrise": "7:23", "Dhuhr": "1:15", "Asr": "4:37", "Maghrib": "7:09", "Isha": "8:14"},
+        {"Ramadan": "20", "Date": "9-Mar", "Day": "Mon", "Fajr": "6:16", "Sunrise": "7:21", "Dhuhr": "1:15", "Asr": "4:37", "Maghrib": "7:10", "Isha": "8:15"},
+        {"Ramadan": "21", "Date": "10-Mar", "Day": "Tue", "Fajr": "6:14", "Sunrise": "7:20", "Dhuhr": "1:15", "Asr": "4:37", "Maghrib": "7:10", "Isha": "8:15"},
+        {"Ramadan": "22", "Date": "11-Mar", "Day": "Wed", "Fajr": "6:13", "Sunrise": "7:19", "Dhuhr": "1:14", "Asr": "4:38", "Maghrib": "7:11", "Isha": "8:16"},
+        {"Ramadan": "23", "Date": "12-Mar", "Day": "Thu", "Fajr": "6:12", "Sunrise": "7:18", "Dhuhr": "1:14", "Asr": "4:38", "Maghrib": "7:12", "Isha": "8:17"},
+        {"Ramadan": "24", "Date": "13-Mar", "Day": "Fri", "Fajr": "6:11", "Sunrise": "7:17", "Dhuhr": "1:14", "Asr": "4:38", "Maghrib": "7:12", "Isha": "8:17"},
+        {"Ramadan": "25", "Date": "14-Mar", "Day": "Sat", "Fajr": "6:10", "Sunrise": "7:15", "Dhuhr": "1:14", "Asr": "4:38", "Maghrib": "7:13", "Isha": "8:18"},
+        {"Ramadan": "26", "Date": "15-Mar", "Day": "Sun", "Fajr": "6:08", "Sunrise": "7:14", "Dhuhr": "1:13", "Asr": "4:38", "Maghrib": "7:14", "Isha": "8:19"},
+        {"Ramadan": "27", "Date": "16-Mar", "Day": "Mon", "Fajr": "6:07", "Sunrise": "7:13", "Dhuhr": "1:13", "Asr": "4:39", "Maghrib": "7:14", "Isha": "8:19"},
+        {"Ramadan": "28", "Date": "17-Mar", "Day": "Tue", "Fajr": "6:06", "Sunrise": "7:12", "Dhuhr": "1:13", "Asr": "4:39", "Maghrib": "7:15", "Isha": "8:20"},
+        {"Ramadan": "29", "Date": "18-Mar", "Day": "Wed", "Fajr": "6:05", "Sunrise": "7:11", "Dhuhr": "1:12", "Asr": "4:39", "Maghrib": "7:16", "Isha": "8:21"},
+        {"Ramadan": "30", "Date": "19-Mar", "Day": "Thu", "Fajr": "6:03", "Sunrise": "7:09", "Dhuhr": "1:12", "Asr": "4:39", "Maghrib": "7:16", "Isha": "8:21"}
+    ];
+
+    // Track which prayer times have already triggered alarm today
+    let triggeredPrayers = new Set();
+    let lastDate = null;
+
+    // Function to play Adhan
+    function playAdhan() {
+        try {
+            // Create or get audio element for Adhan
+            let adhanAudio = document.getElementById('adhan-audio');
+            if (!adhanAudio) {
+                adhanAudio = new Audio();
+                adhanAudio.id = 'adhan-audio';
+                adhanAudio.volume = 0.7;
+                adhanAudio.preload = 'auto';
+                document.body.appendChild(adhanAudio);
+            }
+            
+            // Try local file first, then fallback to URL
+            // Replace 'adhan.mp3' with your actual adhan file name if you have one
+            const localFile = 'adhan.mp3';
+            const adhanUrl = 'https://www.islamcan.com/audio/adhan/adhan.mp3';
+            
+            // Try to play the adhan
+            adhanAudio.src = localFile;
+            adhanAudio.play().catch(error => {
+                console.log("Local file not found, trying URL...", error);
+                // Fallback to URL if local file doesn't exist
+                adhanAudio.src = adhanUrl;
+                adhanAudio.play().catch(err => {
+                    console.error("Error playing adhan from URL:", err);
+                    console.log("Note: Browsers require user interaction before playing audio. Click anywhere on the page first.");
+                });
+            });
+            
+            console.log("Adhan playing...");
+        } catch (error) {
+            console.error("Error playing adhan:", error);
+        }
+    }
+    
+    // Test function - call this manually to test adhan (e.g., from browser console)
+    function testAdhan() {
+        console.log("Testing adhan...");
+        playAdhan();
+    }
+
+    // Check if current time matches prayer time
+    function checkPrayerTime(now) {
+        const currentDate = now.toDateString();
+        
+        // Reset triggered prayers if it's a new day
+        if (lastDate !== currentDate) {
+            triggeredPrayers.clear();
+            lastDate = currentDate;
+        }
+        
+        const prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+        const currentSeconds = now.getSeconds();
+        
+        // Only check at the start of the minute (when seconds = 0)
+        if (currentSeconds !== 0) return;
+        
+        // Helper function to convert 12-hour time to 24-hour minutes
+        function parsePrayerTime(timeStr, prayerId) {
+            if (!timeStr || timeStr === "--:--") return null;
+            const [hrs, mins] = timeStr.split(':').map(Number);
+            if (isNaN(hrs) || isNaN(mins)) return null;
+            
+            let hours24 = hrs;
+            if (prayerId === 'fajr') {
+                hours24 = hrs;
+            } else {
+                hours24 = hrs === 12 ? 12 : hrs + 12;
+            }
+            
+            return hours24 * 60 + mins;
+        }
+        
+        prayers.forEach(id => {
+            const timeStr = document.getElementById(id).textContent;
+            const prayerMinutes = parsePrayerTime(timeStr, id);
+            
+            if (prayerMinutes !== null && currentTime === prayerMinutes) {
+                const prayerKey = `${currentDate}-${id}`;
+                
+                // Only play if we haven't triggered this prayer today
+                if (!triggeredPrayers.has(prayerKey)) {
+                    triggeredPrayers.add(prayerKey);
+                    playAdhan();
+                    console.log(`Prayer time reached: ${id} at ${timeStr}`);
+                }
+            }
+        });
+    }
+
+    // 1. Live Clock Function
+    function updateClock() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', { hour12: true });
+        const timeElement = document.getElementById('current-time');
+        
+        // Split time into hours:minutes, seconds, and AM/PM
+        const timeParts = timeString.split(/(AM|PM)/);
+        if (timeParts.length === 3) {
+            // Split the time part (before AM/PM) into hours:minutes and seconds
+            const timeBeforeAmPm = timeParts[0].trim();
+            const timeMatch = timeBeforeAmPm.match(/^(.+?)(:\d{2})$/);
+            
+            if (timeMatch) {
+                // timeMatch[1] = hours:minutes, timeMatch[2] = :seconds
+                timeElement.innerHTML = timeMatch[1] + '<span style="opacity: 0.5;">' + timeMatch[2] + '</span>' + '<sup>' + timeParts[1] + '</sup>';
+            } else {
+                // Fallback if format doesn't match
+                timeElement.innerHTML = timeParts[0] + '<sup>' + timeParts[1] + '</sup>';
+            }
+        } else {
+            timeElement.textContent = timeString;
+        }
+        
+        const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+        document.getElementById('current-date').textContent = now.toLocaleDateString('en-GB', options);
+        
+        highlightCurrentPrayer(now);
+        updateNextPrayerCountdown(now);
+        checkPrayerTime(now);
+    }
+
+    // 2. Load Data from Embedded JSON
+    function fetchTimings() {
+        try {
+            const now = new Date();
+            // Matching "18-Feb" or "02-Feb" - ensure month is capitalized
+            const day = now.getDate();
+            const month = now.toLocaleString('en-GB', { month: 'short' });
+            const todayStr = `${day}-${month}`;
+            // Also try with leading zero for single digit days
+            const todayStrAlt = `${String(day).padStart(2, '0')}-${month}`;
+
+            console.log("Looking for date:", todayStr, "or", todayStrAlt); // Debugging
+            console.log("Total entries in data:", ramadanTimingsData.length); // Debugging
+
+            // Find matching date in embedded data
+            const todayEntry = ramadanTimingsData.find(entry => {
+                const entryDate = entry.Date.trim();
+                return entryDate === todayStr || entryDate === todayStrAlt;
+            });
+
+            if (todayEntry) {
+                console.log("Match found!", todayEntry);
+                const dayNumber = String(todayEntry.Ramadan).replace('*', '').padStart(2, '0');
+                document.getElementById('ramadan-day').textContent = `${dayNumber} Ramadan 1447`;
+                document.getElementById('fajr').textContent = todayEntry.Fajr || '--:--';
+                document.getElementById('sunrise').textContent = todayEntry.Sunrise || '--:--';
+                document.getElementById('dhuhr').textContent = todayEntry.Dhuhr || '--:--';
+                document.getElementById('asr').textContent = todayEntry.Asr || '--:--';
+                document.getElementById('maghrib').textContent = todayEntry.Maghrib || '--:--';
+                document.getElementById('isha').textContent = todayEntry.Isha || '--:--';
+            } else {
+                console.warn("Date not found in data for:", todayStr);
+                console.warn("Available dates:", ramadanTimingsData.slice(0, 5).map(e => e.Date));
+                // Show error message on page
+                document.getElementById('ramadan-day').textContent = 'Date not found in data';
+            }
+        } catch (error) {
+            console.error("Error loading timings:", error);
+            document.getElementById('ramadan-day').textContent = 'Error loading data';
+            document.getElementById('ramadan-day').style.color = '#ff6b6b';
+        }
+    }
+
+    // 3. Dynamic Highlighting - Find and highlight next prayer
+    function highlightCurrentPrayer(now) {
+        const prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+        
+        // First, remove all active classes
+        prayers.forEach(id => {
+            const row = document.getElementById(`row-${id}`);
+            row.classList.remove('active');
+        });
+        
+        // Helper function to convert 12-hour time to 24-hour minutes
+        function parsePrayerTime(timeStr, prayerId) {
+            if (!timeStr || timeStr === "--:--") return null;
+            const [hrs, mins] = timeStr.split(':').map(Number);
+            if (isNaN(hrs) || isNaN(mins)) return null;
+            
+            let hours24 = hrs;
+            // Determine AM/PM based on prayer type
+            if (prayerId === 'fajr') {
+                // Fajr is always AM (early morning)
+                hours24 = hrs;
+            } else {
+                // Dhuhr, Asr, Maghrib, Isha are all PM
+                // If it's 12:xx, keep as 12, otherwise add 12 for PM
+                hours24 = hrs === 12 ? 12 : hrs + 12;
+            }
+            
+            return hours24 * 60 + mins;
+        }
+        
+        // Get all prayer times and find the next one
+        const prayerTimes = [];
+        prayers.forEach(id => {
+            const timeStr = document.getElementById(id).textContent;
+            const prayerMinutes = parsePrayerTime(timeStr, id);
+            if (prayerMinutes !== null) {
+                prayerTimes.push({ id: id, minutes: prayerMinutes });
+            }
+        });
+        
+        // Sort by time
+        prayerTimes.sort((a, b) => a.minutes - b.minutes);
+        
+        // Find the next prayer (first one that hasn't happened yet today)
+        let nextPrayer = null;
+        for (let i = 0; i < prayerTimes.length; i++) {
+            if (prayerTimes[i].minutes > currentTime) {
+                nextPrayer = prayerTimes[i];
+                break;
+            }
+        }
+        
+        // If no prayer found (past Isha), highlight Fajr (first prayer of next day)
+        if (!nextPrayer && prayerTimes.length > 0) {
+            nextPrayer = prayerTimes[0]; // Fajr is the first prayer
+        }
+        
+        // Highlight the next prayer
+        if (nextPrayer) {
+            const row = document.getElementById(`row-${nextPrayer.id}`);
+            row.classList.add('active');
+        }
+        
+        return nextPrayer;
+    }
+
+    // 4. Update Next Prayer Countdown
+    function updateNextPrayerCountdown(now) {
+        const prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+        const currentTime = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+        
+        // Helper function to convert 12-hour time to 24-hour minutes
+        function parsePrayerTime(timeStr, prayerId) {
+            if (!timeStr || timeStr === "--:--") return null;
+            const [hrs, mins] = timeStr.split(':').map(Number);
+            if (isNaN(hrs) || isNaN(mins)) return null;
+            
+            let hours24 = hrs;
+            if (prayerId === 'fajr') {
+                hours24 = hrs;
+            } else {
+                hours24 = hrs === 12 ? 12 : hrs + 12;
+            }
+            
+            return hours24 * 60 + mins;
+        }
+        
+        // Get all prayer times and find the next one
+        const prayerTimes = [];
+        prayers.forEach(id => {
+            const timeStr = document.getElementById(id).textContent;
+            const prayerMinutes = parsePrayerTime(timeStr, id);
+            if (prayerMinutes !== null) {
+                prayerTimes.push({ id: id, minutes: prayerMinutes, name: id.charAt(0).toUpperCase() + id.slice(1) });
+            }
+        });
+        
+        // Sort by time
+        prayerTimes.sort((a, b) => a.minutes - b.minutes);
+        
+        // Find the next prayer
+        let nextPrayer = null;
+        for (let i = 0; i < prayerTimes.length; i++) {
+            if (prayerTimes[i].minutes > currentTime) {
+                nextPrayer = prayerTimes[i];
+                break;
+            }
+        }
+        
+        // If no prayer found (past Isha), use Fajr (next day)
+        if (!nextPrayer && prayerTimes.length > 0) {
+            nextPrayer = prayerTimes[0];
+            // Add 24 hours (1440 minutes) for next day
+            nextPrayer = { ...nextPrayer, minutes: nextPrayer.minutes + 1440 };
+        }
+        
+        // Update the display
+        if (nextPrayer) {
+            // Calculate time remaining
+            let minutesRemaining = nextPrayer.minutes - currentTime;
+            if (minutesRemaining < 0) {
+                minutesRemaining += 1440; // Add 24 hours if negative
+            }
+            
+            const hours = Math.floor(minutesRemaining / 60);
+            const minutes = Math.floor(minutesRemaining % 60);
+            const seconds = Math.floor((minutesRemaining % 1) * 60);
+            
+            // Format as HH:MM:SS
+            const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            // Format as "{Next Prayer} in {Remaining time}"
+            const prayerName = nextPrayer.name.charAt(0).toUpperCase() + nextPrayer.name.slice(1);
+            document.getElementById('next-prayer-text').innerHTML = `<span class="prayer-name">${prayerName}</span> in ${timeStr}`;
+        } else {
+            document.getElementById('next-prayer-text').textContent = '-- in --:--:--';
+        }
+    }
+
+    setInterval(updateClock, 1000);
+    fetchTimings();
+    updateClock();
+</script>
+
+</body>
+</html>
