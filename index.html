@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ramadan Dashboard - IVEO</title>
+    <title>ICBR Ramadan 1447</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
@@ -287,102 +287,6 @@
         {"Ramadan": "30", "Date": "19-Mar", "Day": "Thu", "Fajr": "6:03", "Sunrise": "7:09", "Dhuhr": "1:12", "Asr": "4:39", "Maghrib": "7:16", "Isha": "8:21"}
     ];
 
-    // Track which prayer times have already triggered alarm today
-    let triggeredPrayers = new Set();
-    let lastDate = null;
-
-    // Function to play Adhan
-    function playAdhan() {
-        try {
-            // Create or get audio element for Adhan
-            let adhanAudio = document.getElementById('adhan-audio');
-            if (!adhanAudio) {
-                adhanAudio = new Audio();
-                adhanAudio.id = 'adhan-audio';
-                adhanAudio.volume = 0.7;
-                adhanAudio.preload = 'auto';
-                document.body.appendChild(adhanAudio);
-            }
-            
-            // Try local file first, then fallback to URL
-            // Replace 'adhan.mp3' with your actual adhan file name if you have one
-            const localFile = 'adhan.mp3';
-            const adhanUrl = 'https://www.islamcan.com/audio/adhan/adhan.mp3';
-            
-            // Try to play the adhan
-            adhanAudio.src = localFile;
-            adhanAudio.play().catch(error => {
-                console.log("Local file not found, trying URL...", error);
-                // Fallback to URL if local file doesn't exist
-                adhanAudio.src = adhanUrl;
-                adhanAudio.play().catch(err => {
-                    console.error("Error playing adhan from URL:", err);
-                    console.log("Note: Browsers require user interaction before playing audio. Click anywhere on the page first.");
-                });
-            });
-            
-            console.log("Adhan playing...");
-        } catch (error) {
-            console.error("Error playing adhan:", error);
-        }
-    }
-    
-    // Test function - call this manually to test adhan (e.g., from browser console)
-    function testAdhan() {
-        console.log("Testing adhan...");
-        playAdhan();
-    }
-
-    // Check if current time matches prayer time
-    function checkPrayerTime(now) {
-        const currentDate = now.toDateString();
-        
-        // Reset triggered prayers if it's a new day
-        if (lastDate !== currentDate) {
-            triggeredPrayers.clear();
-            lastDate = currentDate;
-        }
-        
-        const prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-        const currentTime = now.getHours() * 60 + now.getMinutes();
-        const currentSeconds = now.getSeconds();
-        
-        // Only check at the start of the minute (when seconds = 0)
-        if (currentSeconds !== 0) return;
-        
-        // Helper function to convert 12-hour time to 24-hour minutes
-        function parsePrayerTime(timeStr, prayerId) {
-            if (!timeStr || timeStr === "--:--") return null;
-            const [hrs, mins] = timeStr.split(':').map(Number);
-            if (isNaN(hrs) || isNaN(mins)) return null;
-            
-            let hours24 = hrs;
-            if (prayerId === 'fajr') {
-                hours24 = hrs;
-            } else {
-                hours24 = hrs === 12 ? 12 : hrs + 12;
-            }
-            
-            return hours24 * 60 + mins;
-        }
-        
-        prayers.forEach(id => {
-            const timeStr = document.getElementById(id).textContent;
-            const prayerMinutes = parsePrayerTime(timeStr, id);
-            
-            if (prayerMinutes !== null && currentTime === prayerMinutes) {
-                const prayerKey = `${currentDate}-${id}`;
-                
-                // Only play if we haven't triggered this prayer today
-                if (!triggeredPrayers.has(prayerKey)) {
-                    triggeredPrayers.add(prayerKey);
-                    playAdhan();
-                    console.log(`Prayer time reached: ${id} at ${timeStr}`);
-                }
-            }
-        });
-    }
-
     // 1. Live Clock Function
     function updateClock() {
         const now = new Date();
@@ -412,7 +316,6 @@
         
         highlightCurrentPrayer(now);
         updateNextPrayerCountdown(now);
-        checkPrayerTime(now);
     }
 
     // 2. Load Data from Embedded JSON
